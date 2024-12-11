@@ -17,7 +17,7 @@ interface Message {
   type: 'CHAT' | 'JOIN' | 'LEAVE';
 }
 
-const SOCKET_URL = 'ws://192.1.200.172:8080/ws';
+const SOCKET_URL = 'ws://192.1.125.209:8080/ws';
 
 const ChatScreen = ({route}: any) => {
   const {username} = route.params;
@@ -53,6 +53,16 @@ const ChatScreen = ({route}: any) => {
 
     ws.current.onclose = () => {
       console.log('Disconnected from WebSocket');
+      
+      setMessages(prevMessages => [...prevMessages, 
+        {
+          id: Date.now().toString(),
+          content: 'Disconnected from the chat.',
+          sender: 'System',
+          timestamp: new Date().toISOString(),
+          type: 'LEAVE',
+        },
+      ]);
     };
   };
 
@@ -62,6 +72,7 @@ const ChatScreen = ({route}: any) => {
         id: Date.now().toString(),
         sender: username,
         type: 'JOIN',
+        content: 'Joined the chat.',
         timestamp: new Date().toISOString(),
       };
       ws.current.send(JSON.stringify(message));
@@ -91,8 +102,8 @@ const ChatScreen = ({route}: any) => {
       <Text style={styles.sender}>{item.sender}</Text>
       <Text 
         style={[
-          styles.messageText,
           item.sender === username ? styles.ownMessageText : styles.otherMessageText,
+          item.type!=='CHAT'?styles.messageTypeText: styles.messageText,
         ]}>
         {item.content}
       </Text>
@@ -154,10 +165,15 @@ const styles = StyleSheet.create({
   sender: {
     fontSize: 12,
     marginBottom: 4,
-    color: '#666',
+    color: '#fff',
   },
   messageText: {
     fontSize: 16,
+    color:'#fff'
+  },
+  messageTypeText: {
+    fontSize: 12,
+    color:'#333'
   },
   ownMessageText: {
     color: '#fff',
