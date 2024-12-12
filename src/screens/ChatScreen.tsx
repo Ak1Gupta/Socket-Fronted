@@ -102,8 +102,8 @@ const ChatScreen = ({route}: any) => {
       <Text style={styles.sender}>{item.sender}</Text>
       <Text 
         style={[
-          item.sender === username ? styles.ownMessageText : styles.otherMessageText,
           item.type!=='CHAT'?styles.messageTypeText: styles.messageText,
+          item.sender === username ? styles.ownMessageText : styles.otherMessageText,
         ]}>
         {item.content}
       </Text>
