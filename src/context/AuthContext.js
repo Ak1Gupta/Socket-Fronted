@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const API_BASE_URL = 'http://192.1.125.209:8080/api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -47,8 +48,10 @@ export const AuthProvider = ({ children }) => {
     try {
       await AsyncStorage.removeItem('userSession');
       setUserSession(null);
+      return true;
     } catch (error) {
       console.error('Error removing session:', error);
+      return false;
     }
   };
 

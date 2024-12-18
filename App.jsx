@@ -44,10 +44,27 @@ function AppNavigator() {
               component={SignupScreen}
               options={{headerShown: false}}
             />
+            <Stack.Screen 
+              name="GroupList" 
+              component={GroupListScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen 
+              name="CreateGroup" 
+              component={CreateGroupScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen 
+              name="Chat" 
+              component={ChatScreen}
+              options={{headerShown: false}}
+            />
           </>
         ) : (
           // Main App Stack
           <>
+          {console.log(userSession)}
+          
             <Stack.Screen 
               name="GroupList" 
               component={GroupListScreen}

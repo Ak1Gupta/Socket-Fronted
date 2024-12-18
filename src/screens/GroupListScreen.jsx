@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ const GroupListScreen = ({navigation}) => {
 
   const fetchGroups = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/groups/user/${userSession.username}`);
+      const response = await fetch(`${API_BASE_URL}/groups/user/${userSession?.username}`);
       const data = await response.json();
       setGroups(data);
     } catch (error) {
@@ -38,8 +38,10 @@ const GroupListScreen = ({navigation}) => {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchGroups();
-    }, [userSession.username])
+      if (userSession?.username) {
+        fetchGroups();
+      }
+    }, [userSession?.username])
   );
 
   const onRefresh = () => {
@@ -48,8 +50,19 @@ const GroupListScreen = ({navigation}) => {
   };
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      const logoutSuccess = await logout();
+      if (logoutSuccess) {
+        navigation.navigate('PhoneAuth');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
+
+  if (!userSession) {
+    return null;
+  }
 
   const renderGroup = ({item, index}) => (
     <Animatable.View
@@ -133,11 +146,25 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
     elevation: 5,
   },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    textAlign: 'center',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 16,
+    opacity: 0.9,
+    marginTop: 4,
+  },
+  logoutButton: {
+    padding: 8,
   },
   groupList: {
     padding: 15,
@@ -197,21 +224,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  welcomeText: {
-    color: '#fff',
-    fontSize: 16,
-    opacity: 0.9,
-    marginTop: 4,
-  },
-  logoutButton: {
-    marginLeft: 10,
   },
 });
 

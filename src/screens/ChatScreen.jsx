@@ -7,23 +7,18 @@ import {
   FlatList,
   StyleSheet,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: string;
-  timestamp: string;
-  type: 'CHAT' | 'JOIN' | 'LEAVE';
-}
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SOCKET_URL = 'ws://192.1.125.209:8080/ws';
 
-const ChatScreen = ({route}: any) => {
-  const {username} = route.params;
-  const [messages, setMessages] = useState<Message[]>([]);
+const ChatScreen = ({navigation, route}) => {
+  const { groupName, username } = route.params;
+  const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
-  const ws = useRef<WebSocket | null>(null);
+  const ws = useRef(null);
 
   useEffect(() => {
     connectWebSocket();
@@ -53,7 +48,6 @@ const ChatScreen = ({route}: any) => {
 
     ws.current.onclose = () => {
       console.log('Disconnected from WebSocket');
-      
       setMessages(prevMessages => [...prevMessages, 
         {
           id: Date.now().toString(),
@@ -64,6 +58,11 @@ const ChatScreen = ({route}: any) => {
         },
       ]);
     };
+  };
+
+  const handleAddMember = () => {
+    // TODO: Implement add member functionality
+    console.log('Add member clicked');
   };
 
   const sendJoinMessage = () => {
@@ -93,7 +92,7 @@ const ChatScreen = ({route}: any) => {
     }
   };
 
-  const renderMessage = ({item}: {item: Message}) => (
+  const renderMessage = ({item}) => (
     <View
       style={[
         styles.messageContainer,
@@ -102,7 +101,7 @@ const ChatScreen = ({route}: any) => {
       <Text style={styles.sender}>{item.sender}</Text>
       <Text 
         style={[
-          item.type!=='CHAT'?styles.messageTypeText: styles.messageText,
+          item.type !== 'CHAT' ? styles.messageTypeText : styles.messageText,
           item.sender === username ? styles.ownMessageText : styles.otherMessageText,
         ]}>
         {item.content}
@@ -117,12 +116,36 @@ const ChatScreen = ({route}: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={['#192f6a', '#3b5998', '#4c669f']}
+        style={styles.header}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}>
+            <Icon name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {groupName}
+          </Text>
+          
+          <TouchableOpacity
+            onPress={handleAddMember}
+            style={styles.addButton}>
+            <Icon name="person-add" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
       <FlatList
         data={messages}
         renderItem={renderMessage}
         keyExtractor={item => item.id}
         style={styles.messagesList}
       />
+      
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -143,6 +166,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    padding: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    elevation: 5,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginHorizontal: 16,
+    textAlign: 'center',
+  },
+  addButton: {
+    padding: 8,
   },
   messagesList: {
     flex: 1,
@@ -165,15 +215,15 @@ const styles = StyleSheet.create({
   sender: {
     fontSize: 12,
     marginBottom: 4,
-    color: '#fff',
+    color: '#666',
   },
   messageText: {
     fontSize: 16,
-    color:'#fff'
+    color: '#fff',
   },
   messageTypeText: {
     fontSize: 12,
-    color:'#333'
+    color: '#333',
   },
   ownMessageText: {
     color: '#fff',
