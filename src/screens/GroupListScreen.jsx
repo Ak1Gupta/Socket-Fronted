@@ -94,7 +94,7 @@ const GroupListScreen = ({navigation}) => {
         colors={['#192f6a', '#3b5998', '#4c669f']}
         style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Aora Chat</Text>
+          <Text style={styles.headerTitle}>Aora</Text>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
             <Icon name="logout" size={24} color="#fff" />
           </TouchableOpacity>
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 40,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     elevation: 5,
@@ -161,7 +160,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     opacity: 0.9,
-    marginTop: 4,
   },
   logoutButton: {
     padding: 8,
