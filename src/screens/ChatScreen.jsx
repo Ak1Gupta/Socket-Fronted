@@ -61,8 +61,10 @@ const ChatScreen = ({navigation, route}) => {
   };
 
   const handleAddMember = () => {
-    // TODO: Implement add member functionality
-    console.log('Add member clicked');
+    navigation.navigate('ContactSelection', {
+      groupId: route.params.groupId,
+      groupName: groupName
+    });
   };
 
   const sendJoinMessage = () => {

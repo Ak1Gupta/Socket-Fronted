@@ -7,6 +7,7 @@ import SignupScreen from './src/screens/SignupScreen';
 import GroupListScreen from './src/screens/GroupListScreen';
 import CreateGroupScreen from './src/screens/CreateGroupScreen';
 import ChatScreen from './src/screens/ChatScreen';
+import ContactSelectionScreen from './src/screens/ContactSelectionScreen';
 import {ActivityIndicator, View} from 'react-native';
 import {AuthProvider, useAuth} from './src/context/AuthContext';
 
@@ -44,27 +45,10 @@ function AppNavigator() {
               component={SignupScreen}
               options={{headerShown: false}}
             />
-            <Stack.Screen 
-              name="GroupList" 
-              component={GroupListScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen 
-              name="CreateGroup" 
-              component={CreateGroupScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen 
-              name="Chat" 
-              component={ChatScreen}
-              options={{headerShown: false}}
-            />
           </>
         ) : (
           // Main App Stack
           <>
-          {console.log(userSession)}
-          
             <Stack.Screen 
               name="GroupList" 
               component={GroupListScreen}
@@ -78,6 +62,11 @@ function AppNavigator() {
             <Stack.Screen 
               name="Chat" 
               component={ChatScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen 
+              name="ContactSelection"
+              component={ContactSelectionScreen}
               options={{headerShown: false}}
             />
           </>
