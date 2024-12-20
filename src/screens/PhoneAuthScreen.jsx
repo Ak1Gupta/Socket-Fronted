@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import * as Animatable from 'react-native-animatable';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE_URL = 'http://192.1.125.209:8080/api';
 
@@ -16,7 +17,7 @@ const PhoneAuthScreen = ({navigation}) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
+  const { login } = useAuth();
   const handleSendOTP = async () => {
     if (phoneNumber.length < 10) {
       setError('Please enter a valid phone number');
@@ -25,33 +26,49 @@ const PhoneAuthScreen = ({navigation}) => {
     
     setIsLoading(true);
     setError('');
+
+    //Without Otp
+    const userResponse = await fetch(`${API_BASE_URL}/auth/check-user/${phoneNumber}`);
+    console.log(userResponse);
     
-    try {
-      console.log('Sending OTP request for:', phoneNumber);
-      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phoneNumber }),
-      });
-      
-      const data = await response.json();
-      console.log('Response:', data);
-      
-      if (response.ok) {
-        navigation.navigate('OTPVerification', { phoneNumber });
-      } else {
-        setError(data.error || 'Failed to send OTP');
-        console.error('Error response:', data);
-      }
-    } catch (error) {
-      console.error('Network error:', error);
-      setError('Network error. Please check your connection and try again.');
-    } finally {
-      setIsLoading(false);
+    const userData = await userResponse.json();
+    console.log(userData);
+    
+    if (userResponse.ok && userData.exists) {
+      await login(userData.username);
+      navigation.replace('GroupList');
+    } 
+    else {
+      navigation.navigate('Signup', {phoneNumber});
     }
-  };
+  }
+    
+    // try {
+    //   console.log('Sending OTP request for:', phoneNumber);
+    //   const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({ phoneNumber }),
+    //   });
+      
+    //   const data = await response.json();
+    //   console.log('Response:', data);
+      
+    //   if (response.ok) {
+    //     navigation.navigate('OTPVerification', { phoneNumber });
+    //   } else {
+    //     setError(data.error || 'Failed to send OTP');
+    //     console.error('Error response:', data);
+    //   }
+    // } catch (error) {
+    //   console.error('Network error:', error);
+    //   setError('Network error. Please check your connection and try again.');
+    // } finally {
+    //   setIsLoading(false);
+    // }
+  // };
 
   return (
     <LinearGradient
