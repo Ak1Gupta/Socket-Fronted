@@ -14,8 +14,7 @@ import Contacts from 'react-native-contacts';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE_URL = 'http://192.1.125.209:8080/api';
+import { API_BASE_URL } from '../config/config';
 
 const ContactSelectionScreen = ({ navigation, route }) => {
   const { groupId, groupName } = route.params;
@@ -23,12 +22,27 @@ const ContactSelectionScreen = ({ navigation, route }) => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState([]);
+  const [groupMembers, setGroupMembers] = useState(new Set());
 
   useEffect(() => {
-    getContacts();
+    fetchGroupMembers();
   }, []);
 
-  const getContacts = async () => {
+  const fetchGroupMembers = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/groups/${groupId}`);
+      if (response.ok) {
+        const group = await response.json();
+        const memberPhones = new Set(group.members.map(member => member.phoneNumber));
+        setGroupMembers(memberPhones);
+        getContacts(memberPhones);
+      }
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+    }
+  };
+
+  const getContacts = async (existingMemberPhones) => {
     try {
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.request(
@@ -48,28 +62,37 @@ const ContactSelectionScreen = ({ navigation, route }) => {
       }
 
       const phoneContacts = await Contacts.getAll();
-      const phoneNumbers = phoneContacts.map(contact => 
-        contact.phoneNumbers[0]?.number.replace(/[^0-9]/g, '')
-      ).filter(Boolean);
+      const phoneNumbers = phoneContacts
+        .filter(contact => contact.phoneNumbers && contact.phoneNumbers.length > 0)
+        .map(contact => contact.phoneNumbers[0].number.replace(/[^0-9]/g, ''))
+        .filter(number => !existingMemberPhones.has(number));
 
-      // Check which contacts are registered
+      if (phoneNumbers.length === 0) {
+        setContacts([]);
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/users/check-contacts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phoneNumbers: phoneNumbers }),
+        body: JSON.stringify({ phoneNumbers }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to check contacts');
+        throw new Error('Failed to check contacts');
       }
 
       const { users: registeredUsers } = await response.json();
 
       const processedContacts = phoneContacts
-        .filter(contact => contact.phoneNumbers && contact.phoneNumbers.length > 0)
+        .filter(contact => {
+          if (!contact.phoneNumbers || contact.phoneNumbers.length === 0) return false;
+          const phoneNumber = contact.phoneNumbers[0].number.replace(/[^0-9]/g, '');
+          return !existingMemberPhones.has(phoneNumber);
+        })
         .map(contact => {
           const phoneNumber = contact.phoneNumbers[0].number.replace(/[^0-9]/g, '');
           const registeredUser = registeredUsers?.find(user => 
@@ -83,6 +106,11 @@ const ContactSelectionScreen = ({ navigation, route }) => {
             registered: !!registeredUser,
             username: registeredUser?.username,
           };
+        })
+        .sort((a, b) => {
+          if (a.registered && !b.registered) return -1;
+          if (!a.registered && b.registered) return 1;
+          return a.name.localeCompare(b.name);
         });
 
       setContacts(processedContacts);
@@ -119,7 +147,12 @@ const ContactSelectionScreen = ({ navigation, route }) => {
       });
 
       if (response.ok) {
-        navigation.goBack();
+        navigation.navigate('Chat', {
+          groupId,
+          groupName,
+          username: userSession.username,
+          timestamp: Date.now()
+        });
       }
     } catch (error) {
       console.error('Error adding members:', error);

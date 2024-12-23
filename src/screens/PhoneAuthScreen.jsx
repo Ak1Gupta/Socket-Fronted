@@ -43,6 +43,7 @@ const PhoneAuthScreen = ({navigation}) => {
     }
   }
     
+  //OTP LOGIN
     // try {
     //   console.log('Sending OTP request for:', phoneNumber);
     //   const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {

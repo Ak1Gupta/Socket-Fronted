@@ -14,8 +14,7 @@ import * as Animatable from 'react-native-animatable';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
-
-const API_BASE_URL = 'http://192.1.125.209:8080/api';
+import { API_BASE_URL } from '../config/config';
 
 const GroupListScreen = ({navigation}) => {
   const { logout, userSession } = useAuth();
@@ -71,11 +70,7 @@ const GroupListScreen = ({navigation}) => {
       delay={index * 100}>
       <TouchableOpacity
         style={styles.groupCard}
-        onPress={() => navigation.navigate('Chat', {
-          groupId: item.id,
-          groupName: item.name,
-          username: userSession.username,
-        })}>
+        onPress={() => handleGroupPress(item)}>
         <View style={styles.groupInfo}>
           <Text style={styles.groupName}>{item.name}</Text>
           <Text style={styles.memberCount}>
@@ -86,6 +81,14 @@ const GroupListScreen = ({navigation}) => {
       </TouchableOpacity>
     </Animatable.View>
   );
+
+  const handleGroupPress = (group) => {
+    navigation.navigate('Chat', {
+      groupId: group.id,
+      groupName: group.name,
+      username: userSession.username
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
