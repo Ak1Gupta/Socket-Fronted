@@ -17,7 +17,7 @@ import { API_BASE_URL, SOCKET_URL } from '../config/config';
 import { useFocusEffect } from '@react-navigation/native';
 
 const ChatScreen = ({navigation, route}) => {
-  const { groupId, groupName, username } = route.params;
+  const { groupId, groupName, username, groupAdmin } = route.params;
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
@@ -323,19 +323,20 @@ const ChatScreen = ({navigation, route}) => {
         onPress={() => setShowMenu(false)}
       >
         <View style={styles.menuContent}>
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => {
-              setShowMenu(false);  // Close menu first
-              setTimeout(() => {    // Then navigate
-                handleAddMember();
-              }, 100);
-            }}
-          >
-            <Icon name="person-add" size={24} color="#4c669f" />
-            <Text style={styles.menuText}>Add Member</Text>
-          </TouchableOpacity>
-
+          {groupAdmin === username && 
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                setShowMenu(false);  // Close menu first
+                setTimeout(() => {    // Then navigate
+                  handleAddMember();
+                }, 100);
+              }}
+            >
+              <Icon name="person-add" size={24} color="#4c669f" />
+              <Text style={styles.menuText}>Add Member</Text>
+            </TouchableOpacity>
+          }
           <TouchableOpacity 
             style={styles.menuItem}
             onPress={() => {
@@ -350,18 +351,20 @@ const ChatScreen = ({navigation, route}) => {
             <Text style={styles.menuText}>View Details</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.menuItem, styles.deleteMenuItem]}
-            onPress={() => {
-              setShowMenu(false);  // Close menu first
-              setTimeout(() => {    // Then show delete alert
-                handleDeleteGroup();
-              }, 100);
-            }}
-          >
-            <Icon name="delete" size={24} color="#ff4444" />
-            <Text style={[styles.menuText, styles.deleteText]}>Delete Group</Text>
-          </TouchableOpacity>
+          {groupAdmin === username && 
+            <TouchableOpacity 
+              style={[styles.menuItem, styles.deleteMenuItem]}
+              onPress={() => {
+                setShowMenu(false);  // Close menu first
+                setTimeout(() => {    // Then show delete alert
+                  handleDeleteGroup();
+                }, 100);
+              }}
+            >
+              <Icon name="delete" size={24} color="#ff4444" />
+              <Text style={[styles.menuText, styles.deleteText]}>Delete Group</Text>
+            </TouchableOpacity>
+          }
         </View>
       </TouchableOpacity>
     </Modal>

@@ -86,7 +86,8 @@ const GroupListScreen = ({navigation}) => {
     navigation.navigate('Chat', {
       groupId: group.id,
       groupName: group.name,
-      username: userSession.username
+      username: userSession.username,
+      groupAdmin: group.createdBy.username
     });
   };
 
