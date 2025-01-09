@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
   sender: {
     fontSize: 12,
     marginBottom: 4,
-    color: '#666',
+    color: '#000',
   },
   messageText: {
     fontSize: 16,

@@ -12,7 +12,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE_URL = 'http://192.1.125.209:8080/api';
+const API_BASE_URL = 'http://192.168.112.117:8080/api';
 
 const OTPVerificationScreen = ({route, navigation}) => {
   const {phoneNumber} = route.params;

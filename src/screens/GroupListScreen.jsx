@@ -8,6 +8,7 @@ import {
   FlatList,
   StatusBar,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import * as Animatable from 'react-native-animatable';
@@ -15,6 +16,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useAuth } from '../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { API_BASE_URL } from '../config/config';
+const {width} = Dimensions.get('window');
 
 const GroupListScreen = ({navigation}) => {
   const { logout, userSession } = useAuth();
@@ -67,17 +69,26 @@ const GroupListScreen = ({navigation}) => {
     <Animatable.View
       animation="fadeInUp"
       duration={500}
-      delay={index * 100}>
+      delay={index * 50}
+      style={styles.groupCardContainer}>
       <TouchableOpacity
         style={styles.groupCard}
         onPress={() => handleGroupPress(item)}>
+        <View style={styles.groupAvatarContainer}>
+          <Text style={styles.groupAvatar}>
+            {item.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
         <View style={styles.groupInfo}>
           <Text style={styles.groupName}>{item.name}</Text>
           <Text style={styles.memberCount}>
-            {item.members.length} members
+            {item.members.length} {item.members.length === 1 ? 'member' : 'members'}
+          </Text>
+          <Text style={styles.createdBy}>
+            Created by {item.createdBy.username === userSession.username ? 'you' : item.createdBy.username}
           </Text>
         </View>
-        <Icon name="chevron-right" size={24} color="#666" />
+        <Icon name="chevron-right" size={24} color="#4c669f" />
       </TouchableOpacity>
     </Animatable.View>
   );
@@ -93,47 +104,81 @@ const GroupListScreen = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={['#192f6a', '#3b5998', '#4c669f']}
-        style={styles.header}>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Aora</Text>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Icon name="logout" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.welcomeText}>Welcome, {userSession.firstName || userSession.username}</Text>
-      </LinearGradient>
+      <StatusBar barStyle="light-content" backgroundColor="#192f6a" />
+      
+      <Animatable.View 
+        animation="fadeIn" 
+        duration={1000} 
+        style={styles.headerContainer}>
+        <LinearGradient
+          colors={['#192f6a', '#3b5998', '#4c669f']}
+          style={styles.headerGradient}>
+          <View style={styles.headerContent}>
+            <Animatable.Text 
+              animation="fadeInDown" 
+              duration={1000} 
+              style={styles.headerTitle}>
+              Aora
+            </Animatable.Text>
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+              <Icon name="logout" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <Animatable.Text 
+            animation="fadeInUp" 
+            duration={1000}
+            style={styles.welcomeText}>
+            Welcome back, {userSession.firstName || userSession.username}
+          </Animatable.Text>
+        </LinearGradient>
+      </Animatable.View>
 
       <FlatList
         data={groups}
-        renderItem={renderGroup}
+        renderItem={(renderGroup)}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.groupList}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={['#4c669f']} 
+          />
         }
         ListEmptyComponent={
           !isLoading && (
-            <Text style={styles.emptyText}>
-              No groups yet. Create one to get started!
-            </Text>
+            <Animatable.View 
+              animation="fadeIn" 
+              duration={1000} 
+              style={styles.emptyContainer}>
+              <Icon name="group" size={64} color="#ccc" />
+              <Text style={styles.emptyText}>
+                No groups yet
+              </Text>
+              <Text style={styles.emptySubText}>
+                Create a group to start chatting!
+              </Text>
+            </Animatable.View>
           )
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('CreateGroup', {
-          username: userSession.username
-        })}>
-        <LinearGradient
-          colors={['#4c669f', '#3b5998', '#192f6a']}
-          style={styles.fabGradient}>
-          <Icon name="add" size={30} color="#fff" />
-        </LinearGradient>
-      </TouchableOpacity>
+      <Animatable.View
+        animation="bounceIn"
+        duration={1500}
+        style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('CreateGroup', {
+            username: userSession.username
+          })}>
+          <LinearGradient
+            colors={['#4c669f', '#3b5998', '#192f6a']}
+            style={styles.fabGradient}>
+            <Icon name="add" size={30} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animatable.View>
     </SafeAreaView>
   );
 };
@@ -143,49 +188,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
+  headerContainer: {
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  headerGradient: {
     padding: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 5,
+    paddingTop: 15,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 0,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
+    letterSpacing: 1,
   },
   welcomeText: {
     color: '#fff',
     fontSize: 16,
     opacity: 0.9,
+    marginTop: 5,
   },
   logoutButton: {
     padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
   },
   groupList: {
     padding: 15,
   },
+  groupCardContainer: {
+    marginBottom: 15,
+  },
   groupCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 15,
-    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+  },
+  groupAvatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#4c669f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  groupAvatar: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   groupInfo: {
     flex: 1,
@@ -199,26 +271,44 @@ const styles = StyleSheet.create({
   memberCount: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 2,
+  },
+  createdBy: {
+    fontSize: 12,
+    color: '#999',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    marginTop: 50,
   },
   emptyText: {
-    textAlign: 'center',
+    fontSize: 20,
     color: '#666',
-    marginTop: 30,
-    fontSize: 16,
+    marginTop: 10,
+    fontWeight: '600',
   },
-  fab: {
+  emptySubText: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+  },
+  fabContainer: {
     position: 'absolute',
     bottom: 20,
     right: 20,
+  },
+  fab: {
     borderRadius: 30,
-    elevation: 5,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
   fabGradient: {
     width: 60,

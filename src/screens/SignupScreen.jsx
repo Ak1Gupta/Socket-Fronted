@@ -15,14 +15,14 @@ import LinearGradient from 'react-native-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE_URL = 'http://192.1.125.209:8080/api';
+const API_BASE_URL = 'http://192.168.112.117:8080/api';
 
 const SignupScreen = ({route, navigation}) => {
   const {phoneNumber} = route.params;
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);  
   const { login } = useAuth();
 
   const handleSignup = async () => {
