@@ -10,6 +10,7 @@ import {
   StatusBar,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -25,6 +26,10 @@ const ChatScreen = ({navigation, route}) => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     connectWebSocket();
@@ -58,24 +63,49 @@ const ChatScreen = ({navigation, route}) => {
     }, [])
   );
 
-  const fetchExistingMessages = async () => {
+  const fetchExistingMessages = async (pageNumber = 1, append = false) => {
     try {
+      setIsLoadingMore(true);
       const response = await fetch(
-        `${API_BASE_URL}/messages/group/${groupId}?username=${username}`
+        `${API_BASE_URL}/messages/group/${groupId}?username=${username}&page=${pageNumber}&limit=${PAGE_SIZE}`
       );
+      
       if (response.ok) {
         const data = await response.json();
-        const sortedMessages = data.sort((a, b) => {
-          const timeA = new Date(a.sentAt || a.timestamp);
-          const timeB = new Date(b.sentAt || b.timestamp);
-          return timeA - timeB;
-        });
-        setMessages(sortedMessages);
+        setHasMore(data.hasMore);
+        
+        // Filter out any null messages and ensure all required fields exist
+        const validMessages = (data.messages || []).filter(msg => 
+          msg && msg.id && msg.content && msg.timestamp
+        );
+        
+        if (append) {
+          setMessages(prevMessages => {
+            const combined = [...prevMessages, ...validMessages];
+            return combined.sort((a, b) => 
+              new Date(b.timestamp) - new Date(a.timestamp)
+            );
+          });
+        } else {
+          setMessages(validMessages.sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+          ));
+        }
       } else {
         console.error('Failed to fetch messages:', await response.text());
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchExistingMessages(nextPage, true);
     }
   };
 
@@ -105,7 +135,7 @@ const ChatScreen = ({navigation, route}) => {
     ws.current.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        if (message.type === 'JOIN') {
+        if (!message || message.type === 'JOIN') {
           return;
         } 
         
@@ -121,12 +151,15 @@ const ChatScreen = ({navigation, route}) => {
                Math.abs(new Date(m.timestamp) - new Date(message.timestamp)) < 1000)
             );
 
-            if (!messageExists) {
-              return [...prevMessages, {
-                ...message,
-                id: message.id || Date.now().toString(),
-                timestamp: message.timestamp || new Date().toISOString(),
-              }];
+            if (!messageExists && message.content && message.timestamp) {
+              return [
+                {
+                  ...message,
+                  id: message.id || Date.now().toString(),
+                  timestamp: message.timestamp || new Date().toISOString(),
+                },
+                ...prevMessages
+              ];
             }
             return prevMessages;
           });
@@ -145,12 +178,6 @@ const ChatScreen = ({navigation, route}) => {
       setTimeout(connectWebSocket, 3000);
     };
   };
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollToEnd();
-    }
-  }, [messages]);
 
   const handleAddMember = () => {
     navigation.navigate('ContactSelection', {
@@ -174,6 +201,9 @@ const ChatScreen = ({navigation, route}) => {
 
       // Send through WebSocket only
       ws.current.send(JSON.stringify(message));
+      
+      // Add message to state immediately
+      setMessages(prevMessages => [message, ...prevMessages]);
       
       // Clear input
       setMessageText('');
@@ -370,6 +400,17 @@ const ChatScreen = ({navigation, route}) => {
     </Modal>
   );
 
+  const renderLoader = () => {
+    if (isLoadingMore) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="small" color="#007AFF" />
+        </View>
+      );
+    }
+    return null;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -405,7 +446,14 @@ const ChatScreen = ({navigation, route}) => {
         renderItem={renderMessage}
         keyExtractor={item => item.id?.toString() || Date.now().toString()}
         style={styles.messagesList}
-        onContentSizeChange={() => messagesEndRef.current?.scrollToEnd()}
+        inverted={true}
+        ListFooterComponent={renderLoader}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.3}
+        removeClippedSubviews={false}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={20}
       />
       
       <View style={styles.inputContainer}>
@@ -655,6 +703,11 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     color: '#333',
+  },
+  loaderContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
