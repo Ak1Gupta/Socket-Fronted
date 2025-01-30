@@ -15,7 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const API_BASE_URL = 'http://192.168.112.117:8080/api';
+const API_BASE_URL = 'http://192.1.125.209:8080/api';
 
 const CreateGroupScreen = ({navigation, route}) => {
   const [groupName, setGroupName] = useState('');

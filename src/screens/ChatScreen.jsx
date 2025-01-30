@@ -29,7 +29,8 @@ const ChatScreen = ({navigation, route}) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 10;
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   useEffect(() => {
     connectWebSocket();
@@ -65,23 +66,38 @@ const ChatScreen = ({navigation, route}) => {
 
   const fetchExistingMessages = async (pageNumber = 1, append = false) => {
     try {
+      if (isFetchingMore) return;
+      
+      setIsFetchingMore(true);
       setIsLoadingMore(true);
+      
+      console.log('Fetching messages for page:', pageNumber);
+      
       const response = await fetch(
         `${API_BASE_URL}/messages/group/${groupId}?username=${username}&page=${pageNumber}&limit=${PAGE_SIZE}`
       );
       
       if (response.ok) {
         const data = await response.json();
+        console.log("Has more:", data.hasMore);
+        
         setHasMore(data.hasMore);
         
-        // Filter out any null messages and ensure all required fields exist
         const validMessages = (data.messages || []).filter(msg => 
           msg && msg.id && msg.content && msg.timestamp
         );
         
         if (append) {
           setMessages(prevMessages => {
-            const combined = [...prevMessages, ...validMessages];
+            const newMessages = validMessages.filter(newMsg => 
+              !prevMessages.some(existingMsg => existingMsg.id === newMsg.id)
+            );
+            
+            if (newMessages.length === 0) {
+              return prevMessages;
+            }
+            
+            const combined = [...prevMessages, ...newMessages];
             return combined.sort((a, b) => 
               new Date(b.timestamp) - new Date(a.timestamp)
             );
@@ -97,14 +113,19 @@ const ChatScreen = ({navigation, route}) => {
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
-      setIsLoadingMore(false);
+      setTimeout(() => {
+        setIsLoadingMore(false);
+        setIsFetchingMore(false);
+      }, 500);
     }
   };
 
   const handleLoadMore = () => {
-    if (!isLoadingMore && hasMore) {
+    if (!isLoadingMore && !isFetchingMore && hasMore) {
+      console.log('Loading more messages, page:', page + 1);
       const nextPage = page + 1;
       setPage(nextPage);
+      setIsLoadingMore(true);
       fetchExistingMessages(nextPage, true);
     }
   };
@@ -404,7 +425,7 @@ const ChatScreen = ({navigation, route}) => {
     if (isLoadingMore) {
       return (
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="small" color="#007AFF" />
+          <ActivityIndicator size="large" color="#007AFF" />
         </View>
       );
     }
@@ -449,11 +470,15 @@ const ChatScreen = ({navigation, route}) => {
         inverted={true}
         ListFooterComponent={renderLoader}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.3}
+        // onEndReachedThreshold={0.1}
         removeClippedSubviews={false}
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={20}
+        onMomentumScrollBegin={() => {
+          setIsFetchingMore(false);
+        }}
+        // extraData={isLoadingMore}
       />
       
       <View style={styles.inputContainer}>
@@ -510,11 +535,13 @@ const styles = StyleSheet.create({
   messagesList: {
     flex: 1,
     padding: 10,
+    paddingTop: 0,
   },
   messageContainer: {
     padding: 10,
+    marginTop: 5,
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 5,
     maxWidth: '80%',
   },
   ownMessage: {
@@ -705,9 +732,11 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   loaderContainer: {
-    paddingVertical: 20,
-    alignItems: 'center',
+    height: 50,
+    paddingVertical: 10,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
   },
 });
 
