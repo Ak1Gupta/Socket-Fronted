@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../config/config';
 
-const API_BASE_URL = 'http://192.168.112.117:8080/api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {

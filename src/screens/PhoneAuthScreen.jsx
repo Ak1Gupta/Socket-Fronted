@@ -10,8 +10,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import { useAuth } from '../context/AuthContext';
-
-const API_BASE_URL = 'http://192.1.125.209:8080/api';
+import { API_BASE_URL } from '../config/config';
 
 const PhoneAuthScreen = ({navigation}) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -31,6 +30,8 @@ const PhoneAuthScreen = ({navigation}) => {
     setError('');
 
     //Without Otp
+    console.log("TRYINGGGG");
+    
     const userResponse = await fetch(`${API_BASE_URL}/auth/check-user/${phoneNumber}`);
     console.log(userResponse);
     
